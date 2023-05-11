@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
+//const Joi = require('joi');
 const bcrypt = require ("bcryptjs");
 
-const userSchema = mongoose.Schema(
+
+const userSchema =  new mongoose.Schema(
   {
     name: {
       type: String,
@@ -11,6 +13,7 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      lowercase: true
     },
     profileImg: {
       type: String,
@@ -19,6 +22,7 @@ const userSchema = mongoose.Schema(
     password: {
       type: String,
       required: true,
+      lowercase: true
     },
     isAdmin: {
       type: Boolean,
@@ -45,4 +49,16 @@ userSchema.pre("save", async function (next) {
 
 const User = mongoose.model("User", userSchema);
 
- module.exports = User;
+module.exports = User;
+
+// Define the Joi schema
+// const validateUserSchema = Joi.object({
+//   name: Joi.string().min(3).required(),
+//   email: Joi.string().email().required(),
+//   profileImg: Joi.string().default('/uploads/user/user.png'),
+//   password: Joi.string().min(6).required(),
+//   isAdmin: Joi.boolean().default(false),
+// });
+
+
+

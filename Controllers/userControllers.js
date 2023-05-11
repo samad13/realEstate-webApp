@@ -1,9 +1,37 @@
+const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const User = require('../Models/userModels');
 const generateToken = require('../utils/generateToken')
 
+const multerStorage = multer.diskStorage({
+  destination: (req, file, cb) =>{
+    cb(null, 'public/img/users');
+  },
+  filename: (req, file, cb)=>{
+    const ext = file.mimetype.split('/')[1];
+    cb(null, `user-${req.user.id}-${Date.now()}.${ext}`);
+  }
+});
 
+const multerFilter = (req,file, cb)=>{
+  if(file.mimetype.startsWith('image')){
+    cb(null, true)
+  }else{
+    cb(new Error('not an image, pls upload only image',400), false)
+  }
+};
 
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter
+
+});
+
+const uploadUserPhoto =  upload.single('profileImg')
+const resizeUserPhoto = ( req, res, next)=>{
+  if (!req.file) return next();
+
+}
 
 //@desc   get all users list  
 //@route  GET /api/users
@@ -17,6 +45,10 @@ const getAllUsers = async (req, res) => {
 //@route  POST /api/users
 //@access Public
 const addNewUser = async (req, res) => {
+
+  // const { error } = validateUserSchema.validate(req.body); 
+  // if (error) return res.status(400).send(error.details[0].message);
+
   let { name, email, password } = req.body;
 
   const userExist = await User.findOne({ email });
@@ -95,11 +127,17 @@ const getUserProfile = async (req, res) => {
 // @route    PUT /api/users/profile
 // @access   Private
   const updateUserProfile = async (req, res) => {
+  //   const { error } = validateUserSchema.validate(req.body); 
+  // if (error) return res.status(400).send(error.details[0].message);
+  console.log(req.file)
+  console.log(req.body)
+
     const user = await User.findById(req.user._id);
   
     if (user) {
       user.name = req.body.name || user.name;
       user.email = req.body.email || user.email;
+      user.profileImg = req.body.profileImg || user.profileImg;
       if (req.body.currentPassword && req.body.newPassword) {
         const match = await bcrypt.compare(
           req.body.currentPassword,
@@ -112,6 +150,7 @@ const getUserProfile = async (req, res) => {
           throw new Error("Password do not match");
         }
       }
+      
   
       const updateUser = await user.save();
   
@@ -148,6 +187,9 @@ const getUserById = async (req, res) => {
 // @route    PUT /api/users/:id
 // @access   Private/Admin
 const updateUser = async (req, res) => {
+  const { error } = validateUserSchema.validate(req.body); 
+  if (error) return res.status(400).send(error.details[0].message);
+
   const user = await User.findById(req.params.id);
 
   if (user) {
@@ -196,6 +238,8 @@ module.exports ={
     getAllUsers,
     getUserById,
     updateUser,
-    deleteUser
+    deleteUser,
+    uploadUserPhoto,
+    resizeUserPhoto
 
 }

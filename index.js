@@ -1,14 +1,15 @@
-require("dotenv/config");
 const express = require('express');
 const mongoose = require('mongoose');
+const morgan = require('morgan');
+const dotenv = require("dotenv");
 
 
 const propertyRoutes = require('./Routes/propertyRoutes');
 const userRoutes = require('./Routes/userRoutes');
 
-
+dotenv.config()
 const app = express();
-
+app.use(morgan('dev'))
 
 
 

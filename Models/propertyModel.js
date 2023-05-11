@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
+//const Joi = require('joi');
 
 const propertySchema = mongoose.Schema(
     {
 
     description: {type: String, required: true},
-    property_type: { type: String, enum : ['residential','commercial', ],
+    property_type: { type: String, enum : ['residential','commercial','industrial' ],
      required: [true, "type of property needs to be specify!"], lowercase: true},
         address: { type: String, required: [true, "Must provide your address!"], },
         city: { type: String, required: [true, "Must provide your city!"], },
@@ -28,4 +29,23 @@ const propertySchema = mongoose.Schema(
   );
   
   const Property = mongoose.model("Property", propertySchema);
-   module.exports = Property;
+
+  // const validatePropertySchema = Joi.object({
+  //   description: Joi.string().required(),
+  //   property_type: Joi.string().valid('residential', 'commercial', 'industrial').required(),
+  //   address: Joi.string().required(),
+  //   city: Joi.string().required(),
+  //   state: Joi.string().required(),
+  //   country: Joi.string().required(),
+  //   images: Joi.string().required(),
+  //   price: Joi.number().required(),
+  //   date: Joi.date(),
+  //   rooms: Joi.number().required(),
+  //   bathrooms: Joi.number().required(),
+  //   posted_by: Joi.string().required(),
+  // });
+  
+  
+   module.exports = Property
+    //validatePropertySchema
+   ;

@@ -1,15 +1,58 @@
-const Property = require("../Models/propertyModel")
+const Property  = require("../Models/propertyModel")
+
+const getAllProperties = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+
+    const results = {};
+//test
+// if (req.query.page){
+//   const numTours = await Property.countDocuments();
+//   if (skip >= numTours) throw new Error('this page does not exist')
+// }
+
+    if (endIndex < await Property.countDocuments().exec()) {
+      results.next = {
+        page: page + 1,
+        limit: limit
+      };
+    } 
+
+    if (startIndex > 0) {
+      results.previous = {
+        page: page - 1,
+        limit: limit
+      };
+    }
+//test
+if (req.query.page){
+  if (startIndex >= await Property.countDocuments()) throw new Error('this is above page that exist')
+}
+    results.results = await Property.find().limit(limit).skip(startIndex).exec();
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
 
 //@desc   get all homes list
-//@route  GET /api/homes
+//@route  GET /api/property
 //@access Public
-const getAllPoperties = async (req, res) => {
-    const AllPoperties = await Property.find({});
-    if (!AllPoperties) {
-        return res.status(404).json({ error: 'properties not found' });
-      }
-    res.json(AllPoperties)
-  };
+// const getAllPoperties =  async (req, res) => {
+  
+//     const AllPoperties = await Property.find({});
+//     if (!AllPoperties) {
+//         return res.status(404).json({ error: 'properties not found' });
+//       }
+//     res.json(AllPoperties)
+//   };
   
 
   //@desc   get all homes list by user
@@ -34,6 +77,8 @@ const getAllPoperties = async (req, res) => {
 // @route   POST /api/products
 // @access  Private/user
 const createdProperty = async (req, res) => {
+  // const { error } = validatePropertySchema.validate(req.body); 
+  // if (error) return res.status(400).send(error.details[0].message);
     const property = new Property({
     description: req.body.description,
     property_type: req.body.property_type,
@@ -56,8 +101,11 @@ const createdProperty = async (req, res) => {
 
   // @desc    Update a property
 // @route   PUT /api/property:id
-// @access  Private/Admin
+// @access  Private
 const updateProperty = async (req, res) => {
+  // const { error } = validatePropertySchema.validate(req.body); 
+  // if (error) return res.status(400).send(error.details[0].message);
+
   const { description, property_type, address, city, state, country, images, price, rooms, bathrooms } = req.body;
   const property = await Property.findById(req.params.id);
 
@@ -112,10 +160,9 @@ const deleteProperty = async (req, res) => {
 
 
 
-
   module.exports = {
     createdProperty,
-    getAllPoperties,
+    getAllProperties,
     getUserProperty,
     updateProperty,
     deleteProperty
