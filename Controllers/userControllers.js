@@ -1,17 +1,20 @@
 const multer = require('multer');
+const sharp = require('sharp')
 const bcrypt = require('bcryptjs');
 const User = require('../Models/userModels');
 const generateToken = require('../utils/generateToken')
 
-const multerStorage = multer.diskStorage({
-  destination: (req, file, cb) =>{
-    cb(null, 'public/img/users');
-  },
-  filename: (req, file, cb)=>{
-    const ext = file.mimetype.split('/')[1];
-    cb(null, `user-${req.user.id}-${Date.now()}.${ext}`);
-  }
-});
+// const multerStorage = multer.diskStorage({
+//   destination: (req, file, cb) =>{
+//     cb(null, 'public/img/users');
+//   },
+//   filename: (req, file, cb)=>{
+//     const ext = file.mimetype.split('/')[1];
+//     cb(null, `user-${req.user.id}-${Date.now}.${ext}`);
+//   }
+// });
+
+const multerStorage = multer.memoryStorage();
 
 const multerFilter = (req,file, cb)=>{
   if(file.mimetype.startsWith('image')){
@@ -28,8 +31,18 @@ const upload = multer({
 });
 
 const uploadUserPhoto =  upload.single('profileImg')
-const resizeUserPhoto = ( req, res, next)=>{
+const resizeUserPhoto =  async ( req, res, next)=>{
   if (!req.file) return next();
+
+  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+ 
+
+   await sharp(req.file.buffer)
+  .resize(500, 500)
+  .toFormat('jpeg')
+  .jpeg({quality:90}).toFile(`public/img/users/${req.file.filename}`);
+
+  next()
 
 }
 
@@ -129,15 +142,18 @@ const getUserProfile = async (req, res) => {
   const updateUserProfile = async (req, res) => {
   //   const { error } = validateUserSchema.validate(req.body); 
   // if (error) return res.status(400).send(error.details[0].message);
-  console.log(req.file)
+ console.log(req.file)
   console.log(req.body)
-
+  
     const user = await User.findById(req.user._id);
   
     if (user) {
       user.name = req.body.name || user.name;
       user.email = req.body.email || user.email;
-      user.profileImg = req.body.profileImg || user.profileImg;
+      if (req.file) {
+        user.profileImg = req.file.filename; // save the file path
+      }
+     // user.profileImg = req.body.profileImg || user.profileImg;
       if (req.body.currentPassword && req.body.newPassword) {
         const match = await bcrypt.compare(
           req.body.currentPassword,
