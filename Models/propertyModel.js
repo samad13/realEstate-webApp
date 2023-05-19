@@ -11,8 +11,7 @@ const propertySchema = mongoose.Schema(
         city: { type: String, required: [true, "Must provide your city!"], },
         state: { type: String, required: [true, "Must provide your state!"], },
         country: { type: String, required: [true, "Must provide your country!"], },
-
-      images:{ type: String, required:[true, "images needs to be uploaded!"], },
+      images:{ type: [String], required:[true, "images needs to be uploaded!"], },
       price: { type: Number, required: [true, "Must provide your price!"], },
        date:{ Date },
       rooms: { type: Number, required: [true, "Must provide your number of room!"],},

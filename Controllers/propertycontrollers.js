@@ -1,50 +1,87 @@
+const multer = require('multer');
+const sharp = require('sharp')
 const Property  = require("../Models/propertyModel")
 
-const getAllProperties = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
 
-    const startIndex = (page - 1) * limit;
-    const endIndex = page * limit;
+const multerStorage = multer.memoryStorage();
 
-    const results = {};
-//test
-// if (req.query.page){
-//   const numTours = await Property.countDocuments();
-//   if (skip >= numTours) throw new Error('this page does not exist')
-// }
-
-    if (endIndex < await Property.countDocuments().exec()) {
-      results.next = {
-        page: page + 1,
-        limit: limit
-      };
-    } 
-
-    if (startIndex > 0) {
-      results.previous = {
-        page: page - 1,
-        limit: limit
-      };
-    }
-//test
-if (req.query.page){
-  if (startIndex >= await Property.countDocuments()) throw new Error('this is above page that exist')
-}
-    results.results = await Property.find().limit(limit).skip(startIndex).exec();
-    res.json(results);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+const multerFilter = (req,file, cb)=>{
+  if(file.mimetype.startsWith('image')){
+    cb(null, true)
+  }else{
+    cb(new Error('not an image, pls upload only image'), false)
   }
 };
 
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter
 
+});
+
+const uploadPropertyImage = upload.array('images', 3)
+
+const resizePropertyImage =  async ( req, res, next)=>{
+  if(!req.files) return next();
+
+  req.body.images = []
+
+  await Promise.all(req.files.map( async(file, i)=>{
+   const filename = `property-${req.user.id}-${Date.now()}-${i + 1}.jpeg`;
+
+     await sharp(file.buffer)
+  .resize(2000, 1333)
+  .toFormat('jpeg')
+  .jpeg({quality:90}).toFile(`public/img/property/${filename}`);
+
+  req.body.images.push(filename)
+}))
+  next()
+ 
+}
 
 
 //@desc   get all homes list
 //@route  GET /api/property
 //@access Public
+const getAllProperties = async (req, res) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+
+    const results = {};
+
+    const totalProperties = await Property.countDocuments({}).exec();
+
+    if (endIndex < totalProperties) {
+      results.next = {
+        page: page + 1,
+        limit: limit
+      };
+    }
+
+    if (startIndex !== 0) {
+      results.previous = {
+        page: page - 1,
+        limit: limit
+      };
+    }
+
+    if (req.query.page && startIndex >= totalProperties) {
+      throw new Error('This page does not exist');
+    }
+
+    results.results = await Property.find().limit(limit).skip(startIndex).exec();
+    res.json(results);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+
 // const getAllPoperties =  async (req, res) => {
   
 //     const AllPoperties = await Property.find({});
@@ -54,6 +91,7 @@ if (req.query.page){
 //     res.json(AllPoperties)
 //   };
   
+
 
   //@desc   get all homes list by user
   //@route  GET /api/homes
@@ -165,7 +203,9 @@ const deleteProperty = async (req, res) => {
     getAllProperties,
     getUserProperty,
     updateProperty,
-    deleteProperty
+    deleteProperty,
+    uploadPropertyImage,
+    resizePropertyImage
     
   }
 

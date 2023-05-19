@@ -35,8 +35,6 @@ const resizeUserPhoto =  async ( req, res, next)=>{
   if (!req.file) return next();
 
   req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
- 
-
    await sharp(req.file.buffer)
   .resize(500, 500)
   .toFormat('jpeg')
@@ -142,8 +140,6 @@ const getUserProfile = async (req, res) => {
   const updateUserProfile = async (req, res) => {
   //   const { error } = validateUserSchema.validate(req.body); 
   // if (error) return res.status(400).send(error.details[0].message);
- console.log(req.file)
-  console.log(req.body)
   
     const user = await User.findById(req.user._id);
   
@@ -151,9 +147,8 @@ const getUserProfile = async (req, res) => {
       user.name = req.body.name || user.name;
       user.email = req.body.email || user.email;
       if (req.file) {
-        user.profileImg = req.file.filename; // save the file path
+        user.profileImg = req.file.filename;
       }
-     // user.profileImg = req.body.profileImg || user.profileImg;
       if (req.body.currentPassword && req.body.newPassword) {
         const match = await bcrypt.compare(
           req.body.currentPassword,
