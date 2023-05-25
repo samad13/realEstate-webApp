@@ -10,7 +10,9 @@ const  {
   getUserById,
   updateUser,
   uploadUserPhoto,
-  resizeUserPhoto
+  resizeUserPhoto,
+  forgetPassword,
+  resetPassword
 } = require("../Controllers/userControllers");
 const { protect, admin } = require ("../middlware/authMiddleware");
 
@@ -20,6 +22,8 @@ const router = express.Router();
 
 router.route("/").post(addNewUser).get(protect,admin, getAllUsers);
 router.post("/login", authUser);
+router.post("/forgetPassword", forgetPassword);
+router.patch("/resetPassword/:token", resetPassword);
 router
   .route("/profile")
   .get(protect, getUserProfile).put(protect, uploadUserPhoto,resizeUserPhoto, updateUserProfile)

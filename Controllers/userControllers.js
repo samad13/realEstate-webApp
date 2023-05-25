@@ -1,8 +1,10 @@
+const crypto = require('crypto')
 const multer = require('multer');
 const sharp = require('sharp')
 const bcrypt = require('bcryptjs');
 const User = require('../Models/userModels');
 const generateToken = require('../utils/generateToken')
+const sendEmail = require('../utils/email')
 
 // const multerStorage = multer.diskStorage({
 //   destination: (req, file, cb) =>{
@@ -60,7 +62,7 @@ const addNewUser = async (req, res) => {
   // const { error } = validateUserSchema.validate(req.body); 
   // if (error) return res.status(400).send(error.details[0].message);
 
-  let { name, email, password } = req.body;
+  let { name, email, password, passwordConfirm } = req.body;
 
   const userExist = await User.findOne({ email });
   if (userExist) {
@@ -72,6 +74,7 @@ const addNewUser = async (req, res) => {
     name,
     email,
     password,
+    passwordConfirm,
   });
   if (user) {
     res.status(201).json({
@@ -146,6 +149,7 @@ const getUserProfile = async (req, res) => {
     if (user) {
       user.name = req.body.name || user.name;
       user.email = req.body.email || user.email;
+      
       if (req.file) {
         user.profileImg = req.file.filename;
       }
@@ -159,9 +163,10 @@ const getUserProfile = async (req, res) => {
         } else {
           res.status(401);
           throw new Error("Password do not match");
-        }
-      }
-      
+        };
+        
+      };
+     // passwordConfirm: req.body.passwordConfirm
   
       const updateUser = await user.save();
   
@@ -224,7 +229,7 @@ const updateUser = async (req, res) => {
 
 
 // @desc     Delete a user
-// @route    DELETE /api/users/:id  643935706781be8431bc9cff
+// @route    DELETE /api/users/:id
 // @access   Private/Admin
 const deleteUser = async (req, res) => {
   const user = await User.findById(req.params.id);
@@ -232,13 +237,82 @@ const deleteUser = async (req, res) => {
     await user.deleteOne();
     res.json({ message: "User removed" });
   } else {
-    req.status(404);
+    req.status(404);// check
     throw new Error("User not found");
   }
 };
 
 
 
+const forgetPassword = async(req, res) =>{
+  //get user based on pasted email
+  const user = await User.findOne({email: req.body.email})
+  if(!user)
+  {
+    res.status(404);
+    throw new Error("There is no user with email address",);
+  }
+
+  //generate random reset password
+  const resetToken = user.createPasswordResetToken()
+  await user.save({validateBeforeSave:false});
+
+  //set it to user's email
+  const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
+
+  const message = `Forget your password? submit a patch request with your new password and passwordConfirm to: ${resetURL}.\nIf you didnt forget your password, please ignore this email`;
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Your password reset token(valid for 10 minutes)",
+      message
+    });
+    res.status(200).json({
+      status: "success",
+      message: "Token sent to email!"
+    })
+  } catch (error) {
+    user.passwordResetToken = undefined;
+    user.passwordResetexpires = undefined
+    await user.save({validateBeforeSave:false});
+    console.log('Error sending email:', error.message);
+    res.status(500);
+    throw new Error("There was an error sending the email. Try again later!",);
+
+  }
+  
+} 
+const resetPassword = async (req, res) =>{
+  //get user based on token
+const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+const user = await User.findOne({passwordResetToken: hashedToken,
+  passwordResetexpires: {$gt: Date.now()}})
+  // if token has not expired, and there is user, set the new password
+if(!user){
+  res.status(400);
+    throw new Error('token is invalid or as expired')
+}
+user.password = req.body.password;
+user.passwordConfirm = req.body.passwordConfirm;
+passwordResetToken = undefined;
+passwordResetexpires = undefined;
+
+await user.save()
+
+  //update changedPasswordAt property for the user
+
+  //log the user in, send JWT
+  res.status(201).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    profileImg: user.profileImg,
+    isAdmin: user.isAdmin,
+    token: generateToken(user._id),
+})
+
+}
 
 
 module.exports ={
@@ -251,6 +325,7 @@ module.exports ={
     updateUser,
     deleteUser,
     uploadUserPhoto,
-    resizeUserPhoto
-
+    resizeUserPhoto,
+    forgetPassword,
+    resetPassword
 }
