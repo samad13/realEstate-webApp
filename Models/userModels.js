@@ -69,6 +69,7 @@ userSchema.pre("save", async function (next) {
   //next();
 });
 
+
 userSchema.methods.createPasswordResetToken =  function(){
   const resetToken = crypto.randomBytes(32).toString('hex');
 

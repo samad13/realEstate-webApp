@@ -12,7 +12,9 @@ const  {
   uploadUserPhoto,
   resizeUserPhoto,
   forgetPassword,
-  resetPassword
+  resetPassword,
+  deleteProfile,
+  updatePassword
 } = require("../Controllers/userControllers");
 const { protect, admin } = require ("../middlware/authMiddleware");
 
@@ -27,6 +29,8 @@ router.patch("/resetPassword/:token", resetPassword);
 router
   .route("/profile")
   .get(protect, getUserProfile).put(protect, uploadUserPhoto,resizeUserPhoto, updateUserProfile)
+  router.delete("/profile/:id", protect, deleteProfile)
+  router.put("/updatepassword",protect, updatePassword );
  router
    .route("/:id")
    .get(protect, admin, getUserById)

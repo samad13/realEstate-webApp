@@ -1,3 +1,4 @@
+const asyncHandler = require('express-async-handler');
 const multer = require('multer');
 const sharp = require('sharp')
 const Property  = require("../Models/propertyModel")
@@ -44,17 +45,25 @@ const resizePropertyImage =  async ( req, res, next)=>{
 //@desc   get all homes list
 //@route  GET /api/property
 //@access Public
-const getAllProperties = async (req, res) => {
+const getAllProperties = asyncHandler(async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
+    const searchQuery = req.query.search || '';
 
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
 
     const results = {};
 
-    const totalProperties = await Property.countDocuments({}).exec();
+    let query = Property.find();
+
+    // Apply search query if provided
+    if (searchQuery) {
+      query = query.find({ property_type: { $regex: searchQuery, $options: 'i' } });
+    }
+
+    const totalProperties = await Property.countDocuments(query).exec();
 
     if (endIndex < totalProperties) {
       results.next = {
@@ -74,12 +83,12 @@ const getAllProperties = async (req, res) => {
       throw new Error('This page does not exist');
     }
 
-    results.results = await Property.find().limit(limit).skip(startIndex).exec();
+    results.results = await query.limit(limit).skip(startIndex).exec();
     res.json(results);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
-};
+});
 
 
 // const getAllPoperties =  async (req, res) => {
@@ -94,10 +103,10 @@ const getAllProperties = async (req, res) => {
 
 
   //@desc   get all homes list by user
-  //@route  GET /api/homes
+  //@route  GET /api/property/user
   //@access Private
   
-  const getUserProperty = async (req, res) => {
+  const getUserProperty = asyncHandler(async (req, res) => {
     const myProperty = await Property.find({posted_by:req.user._id});
     if (!myProperty) {
       res.status(404);
@@ -107,14 +116,14 @@ const getAllProperties = async (req, res) => {
       return res.status(404).json('You didn\'t post any properties');
     }
     res.json(myProperty);
-  };
+  });
   
   
 
 // @desc    Create a product
 // @route   POST /api/products
 // @access  Private/user
-const createdProperty = async (req, res) => {
+const createdProperty = asyncHandler(async (req, res) => {
   // const { error } = validatePropertySchema.validate(req.body); 
   // if (error) return res.status(400).send(error.details[0].message);
     const property = new Property({
@@ -135,12 +144,12 @@ const createdProperty = async (req, res) => {
   
     const addProperty= await property.save()
     res.status(201).json(addProperty)
-  }
+  });
 
   // @desc    Update a property
 // @route   PUT /api/property:id
 // @access  Private
-const updateProperty = async (req, res) => {
+const updateProperty = asyncHandler(async (req, res) => {
   // const { error } = validatePropertySchema.validate(req.body); 
   // if (error) return res.status(400).send(error.details[0].message);
 
@@ -170,13 +179,13 @@ const updateProperty = async (req, res) => {
     res.status(404);
     throw new Error("property Not Found");
   }
-};
+});
 
 
 // @desc    DELETE a home and images linked to home
 // @route   DELETE /api/homes/:id
 // @access  Private/and also admin
-const deleteProperty = async (req, res) => {
+const deleteProperty = asyncHandler(async (req, res) => {
   const property = await Property.findById(req.params.id);
 
   if (!property) {
@@ -191,7 +200,7 @@ const deleteProperty = async (req, res) => {
 
   await property.deleteOne();
   res.status(200).json({ message: "Property deleted successfully" });
-};
+});
 
 
 

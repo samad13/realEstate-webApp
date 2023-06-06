@@ -1,3 +1,4 @@
+const asyncHandler = require('express-async-handler');
 const crypto = require('crypto')
 const multer = require('multer');
 const sharp = require('sharp')
@@ -5,6 +6,14 @@ const bcrypt = require('bcryptjs');
 const User = require('../Models/userModels');
 const generateToken = require('../utils/generateToken')
 const sendEmail = require('../utils/email')
+
+const filterObj = (obj, ...allowedFields)=>{
+  const newObj = {}
+  Object.keys(obj).forEach(el=>{
+    if(allowedFields.includes(el)) newObj[el] = obj[el]
+  })
+  return newObj;
+}
 
 // const multerStorage = multer.diskStorage({
 //   destination: (req, file, cb) =>{
@@ -49,15 +58,15 @@ const resizeUserPhoto =  async ( req, res, next)=>{
 //@desc   get all users list  
 //@route  GET /api/users
 //@access private
-const getAllUsers = async (req, res) => {
+const getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find({});
   res.json(users);
-};
+});
 
 //@desc   Register new user
 //@route  POST /api/users
 //@access Public
-const addNewUser = async (req, res) => {
+const addNewUser = asyncHandler(async (req, res) => {
 
   // const { error } = validateUserSchema.validate(req.body); 
   // if (error) return res.status(400).send(error.details[0].message);
@@ -89,14 +98,14 @@ const addNewUser = async (req, res) => {
     res.status(400);
     throw new Error("Invalid user data");
   }
-};
+});
 
 
 
 // @desc     Auth the user & get token
 // @route    GET /api/users/login
 // @access   Public
-const authUser = async (req, res) => {
+const authUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (user && (await user.matchPassword(password))) {
@@ -112,7 +121,7 @@ const authUser = async (req, res) => {
       res.status(401);
       throw new Error("Invalid username or password");
     }
-  };
+  });
 
 
 
@@ -120,7 +129,7 @@ const authUser = async (req, res) => {
  // @desc     get user profile
 // @route    GET /api/users/profile
 // @access   Private
-const getUserProfile = async (req, res) => {
+const getUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
   if (user) {
@@ -135,76 +144,98 @@ const getUserProfile = async (req, res) => {
     res.status(404);
     throw new Error("User not found");
   }
-};
+});
 
 // @desc     Update user profile
 // @route    PUT /api/users/profile
 // @access   Private
-  const updateUserProfile = async (req, res) => {
-  //   const { error } = validateUserSchema.validate(req.body); 
-  // if (error) return res.status(400).send(error.details[0].message);
+
+  const updateUserProfile = asyncHandler(async (req, res) =>{
+  const user = await User.findByIdAndUpdate(req.user._id,
+    { 
+      name: req.body.name,
+      email: req.body.email,
+     profileImg : req.file.filename
+            
+    // profileImg: req.file.filename
+    }, { new: true,
+        runValidators: true });
+       if (!user) {
+        res.status(404)
+        throw new Error("User not found");
+      }      
+  res.json({
+    _id:user._id,
+    name: user.name,
+    email: user.email,
+    profileImg: user.profileImg,
+    isAdmin: user.isAdmin
   
-    const user = await User.findById(req.user._id);
+  });
   
-    if (user) {
-      user.name = req.body.name || user.name;
-      user.email = req.body.email || user.email;
+});
+
+  // const updateUserProfile = asyncHandler(async (req, res) => {
+  // //   const { error } = validateUserSchema.validate(req.body); 
+  // // if (error) return res.status(400).send(error.details[0].message);
+  // const filteredBody = filterObj(req.body, 'name', 'email','profileImg')
+  //   const user = await User.findByIdAndUpdate(req.user._id, filteredBody,{
+    
+  //     name //= req.body.name || user.name;
+  //     email// = req.body.email || user.email;
       
-      if (req.file) {
-        user.profileImg = req.file.filename;
-      }
-      if (req.body.currentPassword && req.body.newPassword) {
-        const match = await bcrypt.compare(
-          req.body.currentPassword,
-          user.password
-        );
-        if (match) {
-          user.password = req.body.newPassword;
-        } else {
-          res.status(401);
-          throw new Error("Password do not match");
-        };
-        
-      };
-     // passwordConfirm: req.body.passwordConfirm
-  
-      const updateUser = await user.save();
-  
-      res.json({
-        _id: updateUser._id,
-        name: updateUser.name,
-        email: updateUser.email,
-        isAdmin: updateUser.isAdmin,
-      });
-      //not sure if we shd pass token
-      // token: generateToken(user._id),
-    } else {
-      res.status(404);
-      throw new Error("User not found");
-    }
-  };
+  //     // if (req.file) {
+  //     //   user.profileImg = req.file.filename;
+  //     }, 
+  //     { new: true });
+
+  //     res.status(404);
+  //     throw new Error("User not found");
+  //   }
+  // });
 
 
+  // @desc     Update user password
+// @route    PUT /api/users/profile/password
+// @access   Private
+const updatePassword = asyncHandler(async(req, res)=>{
+  const user = await User.findById(req.user._id).select('+password');
+  if(!(await user.matchPassword(req.body.currentPassword, user.password))){
+    res.status(404);
+    throw new Error("Your current Password is wrong");
+  }
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  const updateUserPassword = await user.save();
+  res.json({
+    _id:updateUserPassword._id,
+    name: updateUserPassword.name,
+    email: updateUserPassword.email,
+    isAdmin: updateUserPassword.isAdmin,
+    token: generateToken(user._id),
+  });
+
+})
 
   // @desc     get user by Admin
 // @route    GET /api/users/:id
 // @access   Private/admin
-const getUserById = async (req, res) => {
+const getUserById = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id).select("-password");
   if (user) {
     res.json(user);
   } else {
-    req.status(404);
+    res.status(404);
     throw new Error("User not found");
   }
-};
+});
 
   // @desc     Update user
 // @route    PUT /api/users/:id
 // @access   Private/Admin
-const updateUser = async (req, res) => {
-  const { error } = validateUserSchema.validate(req.body); 
-  if (error) return res.status(400).send(error.details[0].message);
+const updateUser = asyncHandler(async (req, res) => {
+  // const { error } = validateUserSchema.validate(req.body); 
+  // if (error) return res.status(400).send(error.details[0].message);
 
   const user = await User.findById(req.params.id);
 
@@ -225,13 +256,33 @@ const updateUser = async (req, res) => {
     res.status(404);
     throw new Error("User not found");
   }
-};
+});
+
+
+// @desc     Delete a user
+// @route    DELETE /api/users/profile:id
+// @access   Private
+const deleteProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  //const user = await User.findById(req.user._id);
+  if (user) {
+    if (!user._id.equals(req.user._id)) {
+      res.status(401);
+      throw new Error("You are not authorized to delete this profile");
+    }
+    await user.deleteOne();
+    res.json({ message: "your account as been deleted" });
+  } else {
+    res.status(404);
+    throw new Error("no account with this inforation");
+  }
+});
 
 
 // @desc     Delete a user
 // @route    DELETE /api/users/:id
 // @access   Private/Admin
-const deleteUser = async (req, res) => {
+const deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
   if (user) {
     await user.deleteOne();
@@ -240,11 +291,11 @@ const deleteUser = async (req, res) => {
     req.status(404);// check
     throw new Error("User not found");
   }
-};
+});
 
 
 
-const forgetPassword = async(req, res) =>{
+const forgetPassword = asyncHandler(async(req, res) =>{
   //get user based on pasted email
   const user = await User.findOne({email: req.body.email})
   if(!user)
@@ -281,8 +332,8 @@ const forgetPassword = async(req, res) =>{
 
   }
   
-} 
-const resetPassword = async (req, res) =>{
+} )
+const resetPassword = asyncHandler(async (req, res) =>{
   //get user based on token
 const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
 
@@ -312,7 +363,7 @@ await user.save()
     token: generateToken(user._id),
 })
 
-}
+})
 
 
 module.exports ={
@@ -327,5 +378,7 @@ module.exports ={
     uploadUserPhoto,
     resizeUserPhoto,
     forgetPassword,
-    resetPassword
+    resetPassword,
+    deleteProfile,
+    updatePassword
 }
