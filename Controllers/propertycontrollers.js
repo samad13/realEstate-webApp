@@ -88,18 +88,7 @@ const getAllProperties = asyncHandler(async (req, res) => {
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
-});
-
-
-// const getAllPoperties =  async (req, res) => {
-  
-//     const AllPoperties = await Property.find({});
-//     if (!AllPoperties) {
-//         return res.status(404).json({ error: 'properties not found' });
-//       }
-//     res.json(AllPoperties)
-//   };
-  
+});  
 
 
   //@desc   get all homes list by user
