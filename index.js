@@ -6,6 +6,7 @@ const helmet = require('helmet')
 const mongoSanitize = require('express-mongo-sanitize')
 const xss = require('xss-clean')
 const hpp = require('hpp')
+const cors = require(cors)
 const { notFound, errorHandler } = require('./middlware/errorHandler')
 const dotenv = require("dotenv");
 
@@ -16,6 +17,11 @@ const userRoutes = require('./Routes/userRoutes');
 dotenv.config()
 const app = express();
 
+//implement cors
+app.use(cors())
+
+
+app.options('*', cors())
 //SET SECURITY HTTP HEADERS
 app.use(helmet())
 
@@ -31,9 +37,6 @@ const limiter = rateLimit({
 })
 
 app.use('/api',limiter);
-
-
-
 
 // Database
 mongoose.set('strictQuery', false);
