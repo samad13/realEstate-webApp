@@ -33,3 +33,6 @@ node index.js
 - [Mongoose](https://mongoosejs.com/)
 - [Bcrypt](https://github.com/kelektiv/node.bcrypt.js)
 - [JWT](https://jwt.io/)
+- [express-rate-limit](https://github.com/express-rate-limit/express-rate-limit)
+- [nodemailer](https://nodemailer.com/about/)
+- [Multer](https://expressjs.com/en/resources/middleware/multer.html)
