@@ -15,3 +15,8 @@ The aim of this project is to built real estate website where by buying of prope
 - Search different property Industrial, Commercial and  residential
 - Connect with buyers and seller
 - Admin can Manage property and user details
+
+## Installation
+```bash
+npm install
+```
