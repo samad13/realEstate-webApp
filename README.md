@@ -21,3 +21,9 @@ The aim of this project is to built real estate website where by buying of prope
 ```bash
 npm install
 ```
+
+2. Setup your .env files for all the packages
+3. Run the node command to build the web app
+```bash
+node index.js
+```
