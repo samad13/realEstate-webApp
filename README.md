@@ -27,3 +27,9 @@ npm install
 ```bash
 node index.js
 ```
+## Dependencies
+## Backend
+- [Express](https://expressjs.com/)
+- [Mongoose](https://mongoosejs.com/)
+- [Bcrypt](https://github.com/kelektiv/node.bcrypt.js)
+- [JWT](https://jwt.io/)
