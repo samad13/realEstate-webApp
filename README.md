@@ -17,6 +17,7 @@ The aim of this project is to built real estate website where by buying of prope
 - Admin can Manage property and user details
 
 ## Installation
+1. Install the required dependencies for this project
 ```bash
 npm install
 ```
