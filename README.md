@@ -8,3 +8,10 @@
 ## Overview
 
 The aim of this project is to built real estate website where by buying of property becomes as easy as a click of button away.
+
+## Features
+- Access and manage your very own dashboard as either buyer or seller
+- You can filter between various property types
+- Search different property Industrial, Commercial and  residential
+- Connect with buyers and seller
+- Admin can Manage property and user details
