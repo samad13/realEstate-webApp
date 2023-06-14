@@ -6,4 +6,4 @@
 
 
 Overview
-The aim of this project is to deliver an education platform for both teachers and students, where students can progress outside of class via lessons, exercises and tests set by teachers, as well as provide an overall fun, learning experience for them.
+The aim of this project is to built real estate website where by buying of property becomes as easy as a click of button away.
