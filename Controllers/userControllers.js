@@ -7,13 +7,6 @@ const User = require('../Models/userModels');
 const generateToken = require('../utils/generateToken')
 const sendEmail = require('../utils/email')
 
-const filterObj = (obj, ...allowedFields)=>{
-  const newObj = {}
-  Object.keys(obj).forEach(el=>{
-    if(allowedFields.includes(el)) newObj[el] = obj[el]
-  })
-  return newObj;
-}
 
 // const multerStorage = multer.diskStorage({
 //   destination: (req, file, cb) =>{

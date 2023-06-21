@@ -1,6 +1,31 @@
 
+/**
+ * @swagger
+ * /api/property:
+ *  get:
+ *    description: Use to request all property
+ *    responses:
+ *      '200':
+ *        description: A successful response
+ */
+
+/**
+ * @swagger
+ * /api/property/:
+ *  post:
+ *    description: Use to create property
+ *    responses:
+ *      '200':
+ *        description: A successful response
+ */
+ 
+
+
 const router = require('express').Router();
 
+// id:
+// type: integer
+// name:
 
 const {createdProperty,
    getAllProperties, 

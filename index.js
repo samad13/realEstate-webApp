@@ -1,12 +1,15 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
+const swaggerUi = require('swagger-ui-express')
+//const YAML = require('yamljs')
+//const swaggerJsdoc=YAML.load('./api.yaml')
 const rateLimit =require('express-rate-limit')
 const helmet = require('helmet')
 const mongoSanitize = require('express-mongo-sanitize')
 const xss = require('xss-clean')
 const hpp = require('hpp')
-const cors = require(cors)
+//const cors = require(cors)
 const { notFound, errorHandler } = require('./middlware/errorHandler')
 const dotenv = require("dotenv");
 
@@ -16,12 +19,16 @@ const userRoutes = require('./Routes/userRoutes');
 
 dotenv.config()
 const app = express();
+//app.use('/api-doc', swaggerUi.serve, swaggerUi.setup(swaggerJsdoc));
 
 //implement cors
-app.use(cors())
+//app.use(cors())
 
-
-app.options('*', cors())
+app.get("/string", (req, res) => {
+  
+  res.status(200).send("Users Route");
+});
+//app.options('*', cors())
 //SET SECURITY HTTP HEADERS
 app.use(helmet())
 
@@ -71,8 +78,11 @@ app.use('/api/property', propertyRoutes);
 app.use("/api/users", userRoutes);
 
 
+
+
 app.use(notFound);
 app.use(errorHandler);
+
 
 const PORT = process.env.PORT || 5000;
 

@@ -1,3 +1,59 @@
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - name
+ *         - email
+ *         - password
+ *         - passwordConfirm
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: The auto-generated id of the user
+ *         name:
+ *           type: string
+ *           description: The name of the user
+ *         email:
+ *           type: string
+ *           description: The email of the user
+ *         profileImg:
+ *           type: string
+ *           description: Profile image URL
+ *         password:
+ *           type: string
+ *           description: Insert password
+ *         passwordConfirm:
+ *           type: string
+ *           description: Confirm the inserted password
+ */
+
+//issue is in above do it later
+/**
+ * @swagger
+ * /users:
+ *   post:
+ *     summary: Create a new User
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       200:
+ *         description: The new user details.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       500:
+ *         description: Some server error
+ */
+
+
 const  express = require ("express");
 
 const  {
